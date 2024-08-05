@@ -555,8 +555,7 @@ impl Chip8 {
             for j in 0..w {
                 let x = x + j;
                 let screen_pos = x as usize + y as usize * SCREEN_WIDTH;
-                self.screen[screen_pos] =
-                    (self.ram[ram_pos as usize] & (1 << (7 - j))) >> (7 - j);
+                self.screen[screen_pos] = (self.ram[ram_pos as usize] & (1 << (7 - j))) >> (7 - j);
             }
         }
 
