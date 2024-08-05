@@ -1,7 +1,6 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::sys::KeyCode;
 use std::time::Duration;
 
 // ╔═══╦═══╦═══╦═══╗
@@ -127,6 +126,7 @@ const FONT_SPRITE_SIZE: u16 = 5;
 const CARTRIDGE_START_ADDR: u16 = 0x200;
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct Chip8 {
     /// Program counter
     pc: u16,
@@ -169,6 +169,12 @@ pub struct Chip8 {
 
     /// Register that receives the result from waiting for a key (`FX0A`)
     waiting_for_key_vx: u8,
+}
+
+impl Default for Chip8 {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Chip8 {
@@ -222,12 +228,12 @@ impl Chip8 {
             0x7 => self.exec_7(op),
             0x8 => self.exec_8(op),
             0x9 => self.exec_9(op),
-            0xA => self.exec_A(op),
-            0xB => self.exec_B(op),
-            0xC => self.exec_C(op),
-            0xD => self.exec_D(op),
-            0xE => self.exec_E(op),
-            0xF => self.exec_F(op),
+            0xA => self.exec_a(op),
+            0xB => self.exec_b(op),
+            0xC => self.exec_c(op),
+            0xD => self.exec_d(op),
+            0xE => self.exec_e(op),
+            0xF => self.exec_f(op),
             _ => unreachable!(),
         }
     }
@@ -512,7 +518,7 @@ impl Chip8 {
 
     /// op: `ANNN`
     /// Store memory address NNN in register I
-    fn exec_A(&mut self, op: u16) {
+    fn exec_a(&mut self, op: u16) {
         let address = op & 0x0FFF;
         self.register_i = address;
         self.pc += OP_LENGTH;
@@ -520,14 +526,14 @@ impl Chip8 {
 
     /// op: `BNNN`
     /// Jump to address NNN + V0
-    fn exec_B(&mut self, op: u16) {
+    fn exec_b(&mut self, op: u16) {
         let address = op & 0x0FFF;
         self.pc = address + self.registers[0x0] as u16;
     }
 
     /// op: `CXNN`
     /// Set VX to a random number with a mask of NN
-    fn exec_C(&mut self, op: u16) {
+    fn exec_c(&mut self, op: u16) {
         let [vx, nn] = (op & 0x0FFF).to_be_bytes();
         self.registers[vx as usize] = rand::random::<u8>() & nn;
         self.pc += OP_LENGTH;
@@ -536,7 +542,7 @@ impl Chip8 {
     /// op: `DXYN`
     /// Draw a sprite at position `VX`, `VY` with `N` bytes of sprite data starting at the address stored in `I`<br>
     /// Set `VF` to `01` if any set pixels are changed to unset, and `00` otherwise
-    fn exec_D(&mut self, op: u16) {
+    fn exec_d(&mut self, op: u16) {
         const SPRITE_WIDTH: u8 = 8;
 
         let vx = (op & 0x0F00) >> 8;
@@ -566,7 +572,7 @@ impl Chip8 {
 
     /// op: `EXSS`
     /// Skip instruction depending on key
-    fn exec_E(&mut self, op: u16) {
+    fn exec_e(&mut self, op: u16) {
         let suffix = op & 0x00FF;
         match suffix {
             0x9E => self.skip_if_key_pressed(op),
@@ -604,7 +610,7 @@ impl Chip8 {
 
     /// op: `FXSS`
     /// Misc
-    fn exec_F(&mut self, op: u16) {
+    fn exec_f(&mut self, op: u16) {
         const STORE_DELAY: u8 = 0x07;
         const WAIT_FOR_KEY: u8 = 0x0A;
         const SET_DELAY: u8 = 0x15;
@@ -686,9 +692,9 @@ impl Chip8 {
     /// op: `FX33`
     /// Store the binary-coded decimal equivalent of the value stored in register VX at addresses `I`, `I + 1`, and `I + 2`
     fn store_bcd(&mut self, op: u16) {
-        let vx = (op & 0x0F00) >> 8;
-        todo!("Implement BCD");
+        let _vx = (op & 0x0F00) >> 8;
         self.pc += OP_LENGTH;
+        todo!("Implement BCD");
     }
 
     /// op: `FX55`
