@@ -34,7 +34,9 @@ const KEYS: [Keycode; 16] = [
 
 fn main() {
     let mut chip8 = Chip8::new();
-    chip8.load_cartridge(include_bytes!("../files/chip8-test-suite.ch8"));
+    chip8.load_cartridge(include_bytes!("../files/timendus_v4.1_1-chip8-logo.ch8"));
+    //chip8.load_cartridge(include_bytes!("../files/timendus_v4.1_2-ibm-logo.ch8"));
+    //chip8.load_cartridge(include_bytes!("../files/timendus_v4.1_3-corax+.ch8"));
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -91,8 +93,6 @@ fn main() {
 
         chip8.set_keys(frame_keys);
         chip8.step();
-
-        println!("Screen: {:?}", chip8.screen);
 
         // Draw screen
         for y in 0..SCREEN_HEIGHT {
@@ -159,7 +159,7 @@ pub struct Chip8 {
     sp: usize,
 
     /// Screen buffer
-    pub screen: [u8; SCREEN_BUF_SIZE / 8],
+    pub screen: [u8; SCREEN_BUF_SIZE],
 
     /// Keys states
     keys: [bool; KEYS_COUNT],
@@ -184,7 +184,7 @@ impl Chip8 {
             ram: [0; RAM_SIZE],
             stack: [0; STACK_SIZE],
             sp: 0,
-            screen: [0; SCREEN_BUF_SIZE / 8],
+            screen: [0; SCREEN_BUF_SIZE],
             keys: [false; KEYS_COUNT],
             waiting_for_key: false,
             waiting_for_key_vx: 0,
@@ -275,7 +275,7 @@ impl Chip8 {
 
     /// Clear the screen to 0
     fn clear_screen(&mut self) {
-        self.screen = [0; SCREEN_BUF_SIZE / 8];
+        self.screen = [0; SCREEN_BUF_SIZE];
     }
 
     /// Return from a subroutine
@@ -550,13 +550,13 @@ impl Chip8 {
         println!("Drawing sprite at ({x}, {y}) of size ({w}, {h})");
 
         for i in 0..h {
+            let ram_pos = i as u16 + self.register_i;
+            let y = y + i;
             for j in 0..w {
                 let x = x + j;
-                let y = y + i;
-                let sprite_pos = i as u16 + j as u16 * SPRITE_WIDTH as u16;
-                let ram_pos = sprite_pos + self.register_i;
                 let screen_pos = x as usize + y as usize * SCREEN_WIDTH;
-                self.screen[screen_pos] ^= self.ram[ram_pos as usize];
+                self.screen[screen_pos] =
+                    (self.ram[ram_pos as usize] & (1 << (7 - j))) >> (7 - j);
             }
         }
 
